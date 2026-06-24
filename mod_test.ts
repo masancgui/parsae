@@ -3,6 +3,7 @@ import {
   alt,
   any,
   between,
+  eof,
   lazy,
   left,
   many0,
@@ -39,21 +40,32 @@ Deno.test(function strTest() {
 });
 
 Deno.test(function anyTest() {
-  const parser = any();
-  assertEquals(parser("x"), {
+  assertEquals(any("x"), {
     success: true,
     value: "x",
     rem: "",
   });
-  assertEquals(parser(""), {
+  assertEquals(any(""), {
     success: false,
     error: { type: "empty-input" },
   });
 });
 
+Deno.test(function eofTest() {
+  assertEquals(eof("x"), {
+    success: false,
+    error: { type: "expected-eof" },
+  });
+  assertEquals(eof(""), {
+    success: true,
+    value: undefined,
+    rem: "",
+  });
+});
+
 Deno.test(function satTest() {
   {
-    const parser = sat(any(), (t) => "0" <= t && t <= "9");
+    const parser = sat(any, (t) => "0" <= t && t <= "9");
     assertEquals(parser("0"), {
       success: true,
       value: "0",
@@ -149,7 +161,7 @@ Deno.test(function many1Test() {
 });
 
 Deno.test(function lazyTest() {
-  const parser = lazy(() => any());
+  const parser = lazy(() => any);
   assertEquals(parser("x"), {
     success: true,
     value: "x",

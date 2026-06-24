@@ -6,7 +6,8 @@ export type ParseFailure = {
   error:
     | { type: "string-mismatch"; expected: string }
     | { type: "empty-input" }
-    | { type: "failed-predicate" };
+    | { type: "failed-predicate" }
+    | { type: "expected-eof" };
 };
 
 /**
@@ -21,9 +22,7 @@ export type ParseSuccess<O> = {
 /**
  * The result of a parsing operation.
  */
-export type ParseResult<O> =
-  | ParseSuccess<O>
-  | ParseFailure;
+export type ParseResult<O> = ParseSuccess<O> | ParseFailure;
 
 /**
  * A parser.
@@ -42,7 +41,7 @@ export const success = <O>(value: O): Parser<O> => (input) => {
 };
 
 /**
- * Creates a parser that consumes a target string or returns an error otherwise.
+ * Creates a parser that consumes a target string and returns it.
  */
 export const str = (target: string): Parser<string> => (input) => {
   if (input.startsWith(target)) {
@@ -59,9 +58,9 @@ export const str = (target: string): Parser<string> => (input) => {
 };
 
 /**
- * Creates a parser that returns the next character in the input.
+ * A parser that returns the next character in the input.
  */
-export const any = (): Parser<string> => (input) => {
+export const any: Parser<string> = (input): ParseResult<string> => {
   if (input.length === 0) {
     return {
       success: false,
@@ -72,6 +71,23 @@ export const any = (): Parser<string> => (input) => {
     success: true,
     value: input[0],
     rem: input.slice(1),
+  };
+};
+
+/**
+ * A parser that succeeds if there is no more input.
+ */
+export const eof: Parser<void> = (input): ParseResult<void> => {
+  if (input.length === 0) {
+    return {
+      success: true,
+      value: undefined,
+      rem: input,
+    };
+  }
+  return {
+    success: false,
+    error: { type: "expected-eof" },
   };
 };
 
