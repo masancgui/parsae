@@ -9,6 +9,7 @@ import {
   many0,
   many1,
   map,
+  not,
   right,
   sat,
   sep,
@@ -35,7 +36,7 @@ Deno.test(function strTest() {
   });
   assertEquals(parser("false"), {
     success: false,
-    error: { type: "string-mismatch", expected: "true" },
+    expected: "true",
   });
 });
 
@@ -47,14 +48,12 @@ Deno.test(function anyTest() {
   });
   assertEquals(any(""), {
     success: false,
-    error: { type: "empty-input" },
   });
 });
 
 Deno.test(function eofTest() {
   assertEquals(eof("x"), {
     success: false,
-    error: { type: "expected-eof" },
   });
   assertEquals(eof(""), {
     success: true,
@@ -64,25 +63,27 @@ Deno.test(function eofTest() {
 });
 
 Deno.test(function satTest() {
-  {
-    const parser = sat(any, (t) => "0" <= t && t <= "9");
-    assertEquals(parser("0"), {
-      success: true,
-      value: "0",
-      rem: "",
-    });
-    assertEquals(parser("x"), {
-      success: false,
-      error: { type: "failed-predicate" },
-    });
-  }
-  {
-    const parser = sat(str("true"), () => true);
-    assertEquals(parser("false"), {
-      success: false,
-      error: { type: "string-mismatch", expected: "true" },
-    });
-  }
+  const parser = sat((char) => "0" <= char && char <= "9");
+  assertEquals(parser("0"), {
+    success: true,
+    value: "0",
+    rem: "",
+  });
+  assertEquals(parser("x"), {
+    success: false,
+  });
+});
+
+Deno.test(function notTest() {
+  const parser = not(sat((char) => "0" <= char && char <= "9"));
+  assertEquals(parser("0"), {
+    success: false,
+  });
+  assertEquals(parser("x"), {
+    success: true,
+    value: undefined,
+    rem: "x",
+  });
 });
 
 Deno.test(function seqTest() {
@@ -94,11 +95,11 @@ Deno.test(function seqTest() {
   });
   assertEquals(parser("("), {
     success: false,
-    error: { type: "string-mismatch", expected: ")" },
+    expected: ")",
   });
   assertEquals(parser("x"), {
     success: false,
-    error: { type: "string-mismatch", expected: "(" },
+    expected: "(",
   });
 });
 
@@ -116,7 +117,7 @@ Deno.test(function altTest() {
   });
   assertEquals(parser("let"), {
     success: false,
-    error: { type: "string-mismatch", expected: "false" },
+    expected: "false",
   });
 });
 
@@ -129,7 +130,7 @@ Deno.test(function mapTest() {
   });
   assertEquals(parser("let"), {
     success: false,
-    error: { type: "string-mismatch", expected: "123" },
+    expected: "123",
   });
 });
 
@@ -151,7 +152,7 @@ Deno.test(function many1Test() {
   const parser = many1(str(";"));
   assertEquals(parser("x"), {
     success: false,
-    error: { type: "string-mismatch", expected: ";" },
+    expected: ";",
   });
   assertEquals(parser(";;"), {
     success: true,

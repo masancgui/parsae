@@ -1,6 +1,5 @@
 import {
   alt,
-  any,
   between,
   eof,
   lazy,
@@ -16,8 +15,8 @@ import {
 
 export type Expr = string | Expr[];
 
-const ws = many0(sat(any, (t) => /\s/.test(t)));
-const atomChar = sat(any, (t) => !/\s/.test(t) && !"()".includes(t));
+const ws = many0(sat((char) => /\s/.test(char)));
+const atomChar = sat((char) => !/\s/.test(char) && !"()".includes(char));
 
 const atom: Parser<Expr> = map(many1(atomChar), (arr) => arr.join(""));
 const expr: Parser<Expr> = alt(atom, lazy(() => list));

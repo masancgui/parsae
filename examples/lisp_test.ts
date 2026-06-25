@@ -4,7 +4,7 @@ import { parser } from "./lisp.ts";
 Deno.test(function lispTest() {
   assertEquals(parser(""), {
     success: false,
-    error: { type: "string-mismatch", expected: "(" },
+    expected: "(",
   });
   assertEquals(parser("()"), {
     success: true,
@@ -13,7 +13,6 @@ Deno.test(function lispTest() {
   });
   assertEquals(parser("()x"), {
     success: false,
-    error: { type: "expected-eof" },
   });
   assertEquals(parser("(hello)"), {
     success: true,

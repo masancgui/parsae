@@ -3,11 +3,7 @@
  */
 export type ParseFailure = {
   success: false;
-  error:
-    | { type: "string-mismatch"; expected: string }
-    | { type: "empty-input" }
-    | { type: "failed-predicate" }
-    | { type: "expected-eof" };
+  expected?: string;
 };
 
 /**
@@ -53,124 +49,98 @@ export const str = (target: string): Parser<string> => (input) => {
   }
   return {
     success: false,
-    error: { type: "string-mismatch", expected: target },
+    expected: target,
   };
 };
 
 /**
- * A parser that returns the next character in the input.
+ * Creates a parser that returns the next char in the input if it satisfies a
+ * predicate.
  */
-export const any: Parser<string> = (input): ParseResult<string> => {
-  if (input.length === 0) {
-    return {
-      success: false,
-      error: { type: "empty-input" },
-    };
+export const sat =
+  (pred: (char: string) => boolean): Parser<string> => (input) => {
+    const char = input[0];
+    if (char !== undefined && pred(char)) {
+      return {
+        success: true,
+        value: char,
+        rem: input.slice(1),
+      };
+    }
+    return { success: false };
+  };
+
+/**
+ * Creates a parser that negates the result of another parser. Does not consume
+ * any input.
+ */
+export const not = <O>(parser: Parser<O>): Parser<void> => (input) => {
+  const res = parser(input);
+  if (res.success) {
+    return { success: false };
   }
   return {
     success: true,
-    value: input[0],
-    rem: input.slice(1),
+    value: undefined,
+    rem: input,
   };
 };
+
+/**
+ * A parser that returns the next char in the input.
+ */
+export const any: Parser<string> = sat(() => true);
 
 /**
  * A parser that succeeds if there is no more input.
  */
-export const eof: Parser<void> = (input): ParseResult<void> => {
-  if (input.length === 0) {
-    return {
-      success: true,
-      value: undefined,
-      rem: input,
-    };
-  }
-  return {
-    success: false,
-    error: { type: "expected-eof" },
-  };
-};
-
-/**
- * Creates a parser that calls another parser and returns the generated value if
- * a predicate applied to that value is true.
- */
-export const sat = <O>(
-  parser: Parser<O>,
-  pred: (t: O) => boolean,
-): Parser<O> =>
-(input) => {
-  const res = parser(input);
-  if (!res.success) {
-    return res;
-  }
-  if (pred(res.value)) {
-    return {
-      success: true,
-      value: res.value,
-      rem: res.rem,
-    };
-  }
-  return {
-    success: false,
-    error: { type: "failed-predicate" },
-  };
-};
+export const eof: Parser<void> = not(any);
 
 /**
  * Creates a parser that calls two parsers in sequence and returns the pair of
  * results.
  */
-export const seq = <O1, O2>(
-  p1: Parser<O1>,
-  p2: Parser<O2>,
-): Parser<[O1, O2]> =>
-(input) => {
-  const res1 = p1(input);
-  if (!res1.success) {
-    return res1;
-  }
-  const res2 = p2(res1.rem);
-  if (!res2.success) {
-    return res2;
-  }
-  return {
-    success: true,
-    value: [res1.value, res2.value],
-    rem: res2.rem,
+export const seq =
+  <O1, O2>(p1: Parser<O1>, p2: Parser<O2>): Parser<[O1, O2]> => (input) => {
+    const res1 = p1(input);
+    if (!res1.success) {
+      return res1;
+    }
+    const res2 = p2(res1.rem);
+    if (!res2.success) {
+      return res2;
+    }
+    return {
+      success: true,
+      value: [res1.value, res2.value],
+      rem: res2.rem,
+    };
   };
-};
 
 /**
  * Creates a parser that tries to call the first parser, and if it fails, calls
  * the second parser.
  */
 export const alt = <O>(p1: Parser<O>, p2: Parser<O>): Parser<O> => (input) => {
-  const res1 = p1(input);
-  if (res1.success) {
-    return res1;
-  }
-  return p2(input);
+  const res = p1(input);
+  return res.success ? res : p2(input);
 };
 
 /**
  * Creates a parser that maps the result of a parser using a function.
  */
-export const map = <O1, O2>(
-  parser: Parser<O1>,
-  f: (value: O1) => O2,
-): Parser<O2> =>
-(input) => {
-  const res = parser(input);
-  if (!res.success) {
-    return res;
-  }
-  return {
-    success: true,
-    value: f(res.value),
-    rem: res.rem,
+export const map =
+  <O1, O2>(parser: Parser<O1>, f: (value: O1) => O2): Parser<O2> => (input) => {
+    const res = parser(input);
+    if (!res.success) {
+      return res;
+    }
+    return {
+      success: true,
+      value: f(res.value),
+      rem: res.rem,
+    };
   };
-};
 
 /**
  * Creates a parser that accumulates successful calls to the given parser until
