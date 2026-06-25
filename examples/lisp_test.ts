@@ -2,31 +2,33 @@ import { assertEquals } from "@std/assert/equals";
 import { parser } from "./lisp.ts";
 
 Deno.test(function lispTest() {
-  assertEquals(parser(""), {
+  assertEquals(parser("", 0), {
     success: false,
+    pos: 0,
     expected: "(",
   });
-  assertEquals(parser("()"), {
+  assertEquals(parser("()", 0), {
     success: true,
     value: [],
-    rem: "",
+    nextPos: 2,
   });
-  assertEquals(parser("()x"), {
+  assertEquals(parser("()x", 0), {
     success: false,
+    pos: 2,
   });
-  assertEquals(parser("(hello)"), {
+  assertEquals(parser("(hello)", 0), {
     success: true,
     value: ["hello"],
-    rem: "",
+    nextPos: 7,
   });
-  assertEquals(parser("(hello world)"), {
+  assertEquals(parser("(hello world)", 0), {
     success: true,
     value: ["hello", "world"],
-    rem: "",
+    nextPos: 13,
   });
-  assertEquals(parser("((hello))"), {
+  assertEquals(parser("((hello))", 0), {
     success: true,
     value: [["hello"]],
-    rem: "",
+    nextPos: 9,
   });
 });
