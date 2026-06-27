@@ -10,6 +10,7 @@ import {
   many1,
   map,
   not,
+  opt,
   right,
   sat,
   sep,
@@ -140,6 +141,20 @@ Deno.test(function mapTest() {
     success: false,
     pos: 0,
     expected: "123",
+  });
+});
+
+Deno.test(function optTest() {
+  const parser = opt(str("x"));
+  assertEquals(parser("x", 0), {
+    success: true,
+    value: "x",
+    nextPos: 1,
+  });
+  assertEquals(parser("", 0), {
+    success: true,
+    value: undefined,
+    nextPos: 0,
   });
 });
 
