@@ -160,18 +160,8 @@ export const map =
  * Creates a parser that calls another parser, but returns undefined on failure
  * instead of failing too.
  */
-export const opt =
-  <O>(parser: Parser<O>): Parser<O | undefined> => (input, pos) => {
-    const res = parser(input, pos);
-    if (res.success) {
-      return res;
-    }
-    return {
-      success: true,
-      value: undefined,
-      nextPos: pos,
-    };
-  };
+export const opt = <O>(parser: Parser<O>): Parser<O | undefined> =>
+  alt(parser, success(undefined));
 
 /**
  * Creates a parser that accumulates successful calls to the given parser until
