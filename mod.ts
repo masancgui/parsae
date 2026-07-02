@@ -222,16 +222,22 @@ export const between = <O1, O2, O3>(
 
 /**
  * Creates a parser that parses alternating sequences of elements and
- * separators. A trailing separator is excluded. Empty sequences are allowed.
+ * separators. A trailing separator is excluded.
  */
-export const sep = <O1, O2>(
+export const sep1 = <O1, O2>(
   parser: Parser<O1>,
   sep: Parser<O2>,
 ): Parser<O1[]> =>
-  alt(
-    map(
-      seq(parser, many0(map(seq(sep, parser), ([, v]) => v))),
-      ([first, rest]) => [first, ...rest],
-    ),
-    success([]),
+  map(
+    seq(parser, many0(right(sep, parser))),
+    ([first, rest]) => [first, ...rest],
   );
+
+/**
+ * Creates a parser that parses alternating sequences of elements and
+ * separators. A trailing separator is excluded. Empty sequences are allowed.
+ */
+export const sep0 = <O1, O2>(
+  parser: Parser<O1>,
+  sep: Parser<O2>,
+): Parser<O1[]> => alt(sep1(parser, sep), success([]));

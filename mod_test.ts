@@ -13,7 +13,8 @@ import {
   opt,
   right,
   sat,
-  sep,
+  sep0,
+  sep1,
   seq,
   str,
   success,
@@ -222,8 +223,32 @@ Deno.test(function betweenTest() {
   });
 });
 
-Deno.test(function sepTest() {
-  const parser = sep(str("x"), str(";"));
+Deno.test(function sep1Test() {
+  const parser = sep1(str("x"), str(";"));
+  assertEquals(parser("", 0), {
+    success: false,
+    pos: 0,
+    expected: "x",
+  });
+  assertEquals(parser("x", 0), {
+    success: true,
+    value: ["x"],
+    nextPos: 1,
+  });
+  assertEquals(parser("x;y", 0), {
+    success: true,
+    value: ["x"],
+    nextPos: 1,
+  });
+  assertEquals(parser("x;x", 0), {
+    success: true,
+    value: ["x", "x"],
+    nextPos: 3,
+  });
+});
+
+Deno.test(function sep0Test() {
+  const parser = sep0(str("x"), str(";"));
   assertEquals(parser("", 0), {
     success: true,
     value: [],
@@ -234,7 +259,7 @@ Deno.test(function sepTest() {
     value: ["x"],
     nextPos: 1,
   });
-  assertEquals(parser("x;", 0), {
+  assertEquals(parser("x;y", 0), {
     success: true,
     value: ["x"],
     nextPos: 1,

@@ -9,7 +9,7 @@ import {
   map,
   type Parser,
   sat,
-  sep,
+  sep0,
   str,
 } from "parsae";
 
@@ -21,5 +21,5 @@ const atomChar = sat((char) => !/\s/.test(char) && !"()".includes(char));
 const atom: Parser<Expr> = map(many1(atomChar), (arr) => arr.join(""));
 const expr: Parser<Expr> = alt(atom, lazy(() => list));
 
-const list = between(str("("), sep(expr, ws), str(")"));
+const list = between(str("("), sep0(expr, ws), str(")"));
 export const parser = left(list, eof);
